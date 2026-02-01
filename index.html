@@ -63,12 +63,15 @@
 <body x-data="{ 
     // --- ระบบรหัสผ่าน ---
     passwordInput: '', 
-    isAuthenticated: false, 
+    isAuthenticated: false, // จะถูกเช็คใน init()
     passError: false,
+    
     checkPassword() {
-        if (this.passwordInput === '2room' || this.passwordInput === '2Room'|| this.passwordInput === 'at'|| this.passwordInput === '2') {
+        if (['2room', '2Room', 'at', '2'].includes(this.passwordInput)) {
             this.isAuthenticated = true;
             this.passError = false;
+            // ✅ บันทึกสถานะลงใน Browser
+            localStorage.setItem('userAuthenticated', 'true');
         } else {
             this.passError = true;
             this.passwordInput = '';
@@ -78,9 +81,9 @@
     // --- 1. ข้อมูลเดิมทั้งหมด ---
     shopName: 'ชื่อหรือรหัสร้านค้า', 
     fixAmount: 22550, 
-    guaranteeAmount: 2,  // ยอดเงินประกันสูงสุด (ช่องควบคุมใหม่)
+    guaranteeAmount: 2, 
     multiplier: 2,
-    memoText1: 'สามครั้ง', // 👈 เพิ่มตัวแปรนี้เพื่อคุมกี่ครั้ง
+    memoText1: 'สามครั้ง', 
     multiplier1: 5,
     limit1: 2,    
     profitPercent: 30,
@@ -91,8 +94,14 @@
     signer: 'นางสาวณพัชชนันท์ ใจสา',
     isCopying: false,
 
-    // 2. ฟังก์ชันตั้งค่าวันที่ปัจจุบัน
+    // 2. ฟังก์ชันเริ่มต้น (เช็ครหัสผ่านเก่า + ตั้งค่าวันที่)
     init() {
+        // ✅ เช็คว่าเคยใส่รหัสผ่านมาก่อนไหม
+        const savedAuth = localStorage.getItem('userAuthenticated');
+        if (savedAuth === 'true') {
+            this.isAuthenticated = true;
+        }
+
         const now = new Date();
         const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
         
@@ -159,6 +168,12 @@
             alert('เกิดข้อผิดพลาด: ' + err.message);
             this.isCopying = false;
         }
+    },
+
+    // --- แถม: ฟังก์ชันสำหรับออกจากระบบ (ถ้าต้องการใช้) ---
+    logout() {
+        localStorage.removeItem('userAuthenticated');
+        location.reload();
     }
 }" x-cloak>
 
@@ -249,7 +264,7 @@
                         <td class="align-top">•</td>
                         <td class="text-[13px]">
                             รหัสแผนการแก้ไขระบบร้านค้าใหม่หนึ่งแผน<span class="" x-text="memoText1"></span>
-                            <span class="font-">ต้องเข้าทำรายการแก้ไขให้เสร็จสิ้นภายใน <span x-text="limitHours"></span> ชั่วโมง</span>
+                            <span class="font-">ต้องเข้าทำรายการแก้ไขให้เสร็จสิ้นใน <span x-text="limitHours"></span> ชั่วโมง</span>
                         </td>
                     </tr>
                     
@@ -334,9 +349,9 @@
         </div>
     </div>
 
-    <div class="sidebar p-6">
+    <div class="sidebar p-6 ">
         <div class="mb-4 border-b border-gray-700 pb-3">
-            <h2 class="text-xl font-black text-orange-500 font-kanit">ใบแจ้งซ่อม 3% โก้งๆ</h2>
+            <h2 class="text-xl font-black text-orange-500 font-kanit">ใบแจ้งซ่อม 3% นะจ๊ะ</h2>
             <p class="text-[9px] text-gray-500 font-bold tracking-widest mt-1">好运</p>
         </div>
 
@@ -394,54 +409,63 @@
             </div>
         </div>
 
+<div class="sidebar w-80 h-screen bg-[#0f141f] border-r border-gray-800 flex flex-col p-6 fixed left-0 top-0 overflow-hidden shadow-2xl">
+
+    <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
+        
+        <div class="space-y-3">
+            <button 
+                @click="copyImageToClipboard()" 
+                :disabled="isCopying"
+                :class="isCopying ? 'bg-gray-600 cursor-wait' : 'bg-emerald-600 hover:bg-emerald-500 border-l-4 border-emerald-400'"
+                class="w-full text-white font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group cursor-pointer relative overflow-hidden">
+                
+                <span x-show="!isCopying" class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    📸 คัดลอกรูปภาพ
+                </span>
+                <span x-show="isCopying" class="animate-pulse">กำลังประมวลผล...</span>
+            </button>
+
+            <a href="https://mom-baby.github.io/Makeupbrand-Repair/" 
+               class="w-full bg-[#1a1a1a] hover:bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 border-l-4 border-pink-600 group cursor-pointer text-sm">
+                <img src="https://img2.pic.in.th/image8ba713353b0d7aa4.md.png" alt="icon" class="w-5 h-5 object-contain">
+                <span>ซ่อมบันทึกเครื่องสำอาง</span>
+            </a>
+
+            <a href="https://mom-baby.github.io/repear/" 
+               class="w-full bg-[#1a1a1a] hover:bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 border-l-4 border-blue-500 group cursor-pointer text-sm">
+                <span>👶 ซ่อมบันทึกแม่และเด็ก</span>
+            </a>
+
+            <a href="https://mom-baby.github.io/3-/" 
+               class="w-full bg-[#1a1a1a] hover:bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 border-l-4 border-orange-600 group cursor-pointer text-sm">
+                <span>📉 ซ่อม 3% แม่และเด็ก</span>
+            </a>
+        </div>
+
+        <hr class="border-gray-800 my-2">
+
+        <div class="space-y-4">
             <div class="input-group">
-                <label class="label-tag">📅 วันที่ในเอกสาร</label>
-                <input type="text" x-model="docDate" class="input-box">
+                <label class="text-gray-400 text-[11px] font-bold mb-1 block uppercase">📅 วันที่ในเอกสาร</label>
+                <input type="text" x-model="docDate" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white outline-none focus:border-orange-500 transition-all">
             </div>
 
             <div class="input-group">
-                <label class="label-tag">✍️ ชื่อผู้ลงนาม</label>
-                <input type="text" x-model="signer" class="input-box">
+                <label class="text-gray-400 text-[11px] font-bold mb-1 block uppercase">✍️ ชื่อผู้ลงนาม</label>
+                <input type="text" x-model="signer" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white outline-none focus:border-orange-500 transition-all">
             </div>
 
-            <div class="mb-4">
-                <label class="block text-xs font-bold text-gray-400 mb-1">📅 วันที่ REF NO มุมขวาบน</label>
-                <input type="text" x-model="refDate" class="w-full bg-gray-800 text-white rounded px-3 py-2 border border-gray-700">
-            </div>
-
-            <div class="mt-4 space-y-3">
-                <button 
-                    @click="copyImageToClipboard()" 
-                    :disabled="isCopying"
-                    :class="isCopying ? 'bg-gray-600 cursor-wait' : 'bg-emerald-600 hover:bg-emerald-500 border-l-4 border-emerald-400'"
-                    class="w-full text-white font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group cursor-pointer relative overflow-hidden">
-                    
-                    <span x-show="!isCopying" class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        📸 คัดลอกรูปภาพ
-                    </span>
-
-                    <span x-show="isCopying" class="flex items-center gap-2 animate-pulse">
-                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        กำลังประมวลผล...
-                    </span>
-                </button>
-
-        <a href="https://mom-baby.github.io/repear/" target="_blank"
-        class="w-full bg-[#1a1a1a] hover:bg-gray-800 text-white font-bold py-5 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 border-l-4 border-orange-900 group cursor-pointer text-sm">
-            <span>ซ่อมบันทึกช่วยจำกดเลย</span>
-        </a>
-                </a>
+            <div class="input-group">
+                <label class="text-gray-400 text-[11px] font-bold mb-1 block uppercase">📅 วันที่ REF NO มุมขวาบน</label>
+                <input type="text" x-model="refDate" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white outline-none focus:border-orange-500 transition-all">
             </div>
         </div>
+        
+        <div class="h-10"></div>
     </div>
 </div>
-
-</body>
-</html>
